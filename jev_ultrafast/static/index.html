@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="demo-token" content="__TOKEN__" />
+    <title>Browser Agent · Local</title>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <a href="/" aria-label="Homepage" class="brand">Browser<span> Agent</span></a>
+      <div class="local">
+        <span class="dot"></span><span id="service-status">正在连接本机服务</span>
+        <button type="button" id="service-restart" disabled>重启服务</button>
+        <button type="button" id="service-stop" disabled>停止服务</button>
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow">LOCAL BROWSER AGENT</p>
+          <h1>用一句话让 Agent 操作浏览器。</h1>
+          <p>
+            填写目标即可开始。Browser Use 读取结构化页面信息，Jev 选择下一步，Browser Harness 做安全校验并执行。
+          </p>
+        </div>
+        <div class="model-tag">Jev <span>+ DeepSeek fallback</span></div>
+      </section>
+      <form id="task-form">
+        <div class="task-label">
+          <label for="goal">任务目标</label>
+        </div>
+        <div class="task-row">
+          <textarea id="goal" name="goal" rows="3" maxlength="2000" required placeholder="例如：搜索并打开量子力学的维基百科词条"></textarea
+          ><button type="submit" id="start" class="primary">
+            开始执行 <span>↗</span>
+          </button>
+        </div>
+        <details class="task-options">
+          <summary>可选设置：起始网址和完成验证</summary>
+          <div class="optional-fields">
+            <label for="url">起始网址 <span>留空时从 Google 开始</span></label>
+            <input id="url" name="url" type="url" placeholder="https://www.wikipedia.org/" />
+            <label for="expect-text">验证文本 <span>可选；页面标题或正文包含此文本才显示验证通过</span></label>
+            <input id="expect-text" name="expect-text" type="text" maxlength="300" placeholder="例如：Quantum mechanics" />
+          </div>
+        </details>
+      </form>
+      <div class="toolbar">
+        <div class="status">
+          <span class="dot" id="status-dot"></span
+          ><span id="status" role="status">Ready to explore</span>
+        </div>
+        <div class="controls"><label class="overlay-control"><input name="pace" id="pace" type="checkbox"> Slow motion</label>
+          <label class="overlay-control"
+            ><input name="overlays" id="overlays" type="checkbox" checked />
+            Targets</label
+          ><button type="button" id="choose" disabled>选择下一步</button
+          ><button type="button" id="execute" disabled>执行选择</button
+          ><button type="button" id="auto" disabled>继续自动运行</button
+          ><button type="button" id="stop" hidden>Pause</button>
+        </div>
+      </div>
+      <div id="error" role="alert" hidden></div>
+      <section class="workspace">
+        <div class="browser-panel">
+          <div class="browser-bar">
+            <div class="traffic"><b></b><b></b><b></b></div>
+            <span id="url">本机浏览器</span
+            ><span class="live">LIVE</span>
+          </div>
+          <div class="viewport" id="viewport">
+            <div class="empty" id="empty">
+              <p class="empty-symbol">[ ↗ ]</p>
+                <h2>观察浏览器操作过程</h2>
+              <p>
+                提交任务后，这里会显示受控浏览器、可用操作和模型选择。
+              </p>
+            </div>
+            <img
+              id="screenshot"
+              alt="Live screenshot of the controlled browser"
+              hidden
+            />
+            <div id="targets"></div>
+          </div>
+          <div class="browser-footer">
+            <span id="page-title">等待打开页面</span
+            ><span>Browser Use 页面理解 → Jev 选择 → 安全校验 → Browser Harness 执行</span>
+          </div>
+        </div>
+        <aside>
+          <div class="aside-header">
+            <div>
+              <p class="eyebrow">下一步操作</p>
+              <h2 id="choice-title">等待页面</h2>
+            </div>
+            <span id="action-count">0 options</span>
+          </div>
+          <div id="plan" class="plan"></div>
+          <div class="metrics">
+            <div><span>Decision time</span><strong id="latency">—</strong></div>
+            <div>
+              <span>Target confidence</span><strong id="confidence">—</strong>
+            </div>
+            <div>
+              <span>Operation</span
+              ><strong id="completion">—</strong>
+            </div>
+          </div>
+          <div id="operation-choices" class="operation-choices"></div>
+          <p class="distribution-label">
+            页面元素
+            <span id="ranking-note">选择下一步后显示排序</span>
+          </p>
+          <div id="choices" class="choices">
+            <p class="muted">Available actions will appear here.</p>
+          </div>
+          <p class="aside-note">
+            模型只能从当前页面提供的候选操作中选择。只有填写输入框时才会生成文本。
+          </p>
+        </aside>
+      </section>
+      <section class="trace">
+        <div class="trace-heading">
+          <h2>操作记录 <span id="step-count">0 次操作</span></h2>
+          <button type="button" id="download" disabled>导出记录 ↓</button>
+        </div>
+        <div id="history">
+          <p class="muted">每次执行后都会由 Browser Use 重新读取结构化页面状态。</p>
+        </div>
+      </section>
+      <details>
+        <summary>查看模型收到的页面信息</summary>
+        <pre id="model-state">
+Start a demo to inspect its structured state.</pre>
+      </details>
+      <details class="debug-details">
+        <summary>调试信息：停止原因、模型选择与 fallback</summary>
+        <pre id="debug-state">运行任务后会显示本次诊断信息。</pre>
+      </details>
+      <footer>
+        <span>Browser Agent · 本地交互入口</span
+        ><span id="helper">正在读取模型配置</span>
+      </footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

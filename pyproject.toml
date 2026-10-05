@@ -1,0 +1,35 @@
+[project]
+name = "browser-agent"
+version = "0.1.0"
+description = "A local Browser Use observer with Jev decisions and Browser Harness execution."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "browser-harness==0.1.13",
+    "browser-use==0.13.10",
+    "httpx[http2]>=0.28,<1",
+]
+
+[project.scripts]
+browser-agent = "jev_ultrafast.cli:main"
+browser-agent-ui = "jev_ultrafast.demo:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["jev_ultrafast"]
+
+[dependency-groups]
+dev = ["pytest>=8.4,<9", "ruff>=0.14,<1", "pillow>=11,<13"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
