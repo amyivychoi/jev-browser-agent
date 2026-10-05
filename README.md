@@ -1,8 +1,38 @@
-# Local Browser Agent
+# Jev Browser Agent ⚡
+
+**A local browser agent that reads with Browser Use, decides with Jev, and validates-and-executes with Browser Harness — ~2.6× faster and ~half the cost of a Qwen3-32B baseline at the same success rate.**
+
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-3776AB?logo=python&logoColor=white)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A local browser agent using Browser Use for structured page understanding, Jev for bounded next-action selection, and Browser Harness for final validation and execution.
 
 Jev decisions use OpenRouter's Decisions API with `~typesafe/jev-latest` and `OPENROUTER_API_KEY`. If Jev fails, returns invalid choices, or gives confidence below `0.95` for the selected operation or target, the agent asks an independent chat model to choose from the same observation. By default, fallback decisions and generated form text use OpenRouter. If `DEEPSEEK_API_KEY` is set, those chat requests go directly to DeepSeek instead; Jev remains on OpenRouter.
+
+## Benchmarks: Jev vs Qwen3-32B
+
+The agent's main decision comes from **Jev** (`~typesafe/jev-latest`, via OpenRouter's
+Decisions API). To answer "why not just put a big general model in the loop?", the same five
+browser tasks are run twice — once with Jev deciding, once with **Qwen3-32B**
+(`qwen/qwen3-32b`) deciding. Success is judged independently (a required `expect` phrase on
+the final page), never by the model's own `DONE`.
+
+**Why Qwen3-32B as the comparison.** It is a strong, widely used open-weight model in the
+same size class, so this is not "a specialist beating a weak model". More importantly, it is
+the *fallback, text, and review* model in the Jev arm too (`FALLBACK_MODEL == QWEN_MODEL`),
+so the **only** variable that changes between the two arms is the primary decision model.
+That is what makes the comparison clean.
+
+| arm | success | wall-clock | cost (USD) | decisions | fallback |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **Jev** | **4/5** | **296s** | **$0.022** | 21 | 14 |
+| Qwen3-32B | 4/5 | 766s | $0.045 | 41 | 41 |
+
+At the same success rate, Jev is **~2.6× faster** and **~half the cost**. The two models also
+fail *differently* on the one shared failure (`wiki-site-search`): Jev stalls in "honest
+hesitation" (too many similar dropdown options to lock a target at 95% confidence), while
+Qwen falls behind a page that extensions rewrite ~10×/s. The full per-case table, the
+root-cause attribution, and the experiment design are in
+[`benchmark_results/20261005T033201Z/report.md`](benchmark_results/20261005T033201Z/report.md).
 
 ## Requirements
 
