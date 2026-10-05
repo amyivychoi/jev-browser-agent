@@ -27,6 +27,8 @@ That is what makes the comparison clean.
 | **Jev** | **4/5** | **296s** | **$0.022** | 21 | 14 |
 | Qwen3-32B | 4/5 | 766s | $0.045 | 41 | 41 |
 
+![Jev vs Qwen3-32B — wall-clock time and cost](docs/benchmark.svg)
+
 At the same success rate, Jev is **~2.6× faster** and **~half the cost**. The two models also
 fail *differently* on the one shared failure (`wiki-site-search`): Jev stalls in "honest
 hesitation" (too many similar dropdown options to lock a target at 95% confidence), while
