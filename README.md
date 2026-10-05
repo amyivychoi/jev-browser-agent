@@ -84,6 +84,53 @@ The agent generates text only for an observed editable field. It does not invent
 - Generic containers, wrapper duplicates, and long row-derived accessible names are excluded from candidates; the remainder is ranked with result-title links first and capped at 60. See `ARCHITECTURE.md` for the full candidate rules.
 - Page content is read from whatever page the run reaches, with no host exemptions. Mailbox and account pages included, their text and candidates go to the providers configured in `.env`. Chrome runs with your real login state, so restrict a run's goal to pages you are willing to send there.
 
+## What this adds over `jev-ultrafast`
+
+This repository adapts the MIT-licensed `browser-use/jev-ultrafast` loop, but its real
+contribution is the **validation and execution layer** wrapped around Jev's decision.
+Upstream demonstrates the loop; this project makes it hold up on real, noisy pages.
+
+**Why three tools together.** Each has exactly one bounded job:
+
+- **Browser Use** reads the page. It produces the structured DOM/accessibility snapshot
+  (title, headings, visible controls, form state, viewport). It never acts.
+- **Jev** decides. It picks one operation plus one candidate from that snapshot through
+  OpenRouter's Decisions API. It never emits selectors, coordinates, or code.
+- **Browser Harness** executes. It is the only component that touches the page, and it
+  re-resolves the chosen node and rechecks it before every action.
+
+The split keeps the model's output bounded to an id drawn from a candidate set, and every
+action is independently re-validated by code before it runs. Browser Use understands but
+does not act; Browser Harness acts but does not understand — combined, they close the
+observe → decide → validate → act loop.
+
+**Changes made to raise the success rate on real pages:**
+
+- **Result-aware candidates.** A result title is identified by its own label, never
+  borrowed from a wrapping container; results are ranked first and the set is capped at
+  60, with a `candidate_diagnostics` breakdown of every dropped element.
+- **Freshness that ignores ordinary churn.** Page identity covers the target, URL, title,
+  headings, actions, and guard values; ambient text (ads, clocks, lazy content) is
+  excluded, and self-changing label parts (`收件箱 (3)`, `2 分钟前`, clock values) are
+  normalised away for comparison only.
+- **A correct hit point for two-line result links.** An inline link laid out as a url line
+  above a title line has per-line fragment boxes; its bounding-box centre falls in the gap
+  between them and hit-tests as a neighbouring element. The executor clicks the first
+  point that resolves to the element or its descendants, fixing failures that surfaced as
+  `stale-page` but were really a geometry bug.
+- **New-tab following.** A `target="_blank"` click moves both observation and execution to
+  the tab that actually appeared, instead of re-clicking the same link forever.
+- **Closed-page safety.** When the run's own page disappears it stops as `target-lost`
+  rather than silently observing one of your other tabs.
+- **A review pass before giving up.** When a page keeps rewriting itself, a chat model
+  checks the current page against the goal before the run reports a dead end (capped at
+  two rescues).
+- **Form-aware candidate narrowing.** Around a partly filled form, unrelated candidates
+  are dropped so the run submits instead of wandering off — unless real results are on
+  screen.
+
+See `ARCHITECTURE.md` for the full candidate, freshness, and hit-test rules.
+
 ## Project origin
 
 This project adapts the MIT-licensed `browser-use/jev-ultrafast` browser loop and retains its license. Jev uses OpenRouter; fallback and form-text requests use OpenRouter by default or DeepSeek directly when configured.
