@@ -124,23 +124,32 @@ The agent generates text only for an observed editable field. It does not invent
 
 ## What this adds over `jev-ultrafast`
 
-This repository adapts the MIT-licensed `browser-use/jev-ultrafast` loop, but its real
-contribution is the **validation and execution layer** wrapped around Jev's decision.
-Upstream demonstrates the loop; this project makes it hold up on real, noisy pages.
+This repository adapts the MIT-licensed `browser-use/jev-ultrafast` loop. Upstream already
+runs the same bounded loop — **Jev** picks one operation plus one target, a small text model
+writes form text, and **Browser Harness** executes over CDP with freshness and occlusion
+rechecks. The executor is inherited, not added here. What changes is the **reader** and the
+**guardrails around the decision**, so the same loop holds up on real, noisy pages.
 
-**Why three tools together.** Each has exactly one bounded job:
+**The one structural swap — and what stays the same.**
 
-- **Browser Use** reads the page. It produces the structured DOM/accessibility snapshot
-  (title, headings, visible controls, form state, viewport). It never acts.
-- **Jev** decides. It picks one operation plus one candidate from that snapshot through
-  OpenRouter's Decisions API. It never emits selectors, coordinates, or code.
-- **Browser Harness** executes. It is the only component that touches the page, and it
-  re-resolves the chosen node and rechecks it before every action.
+- **Reader: `snapshot.js` → Browser Use.** Upstream injects its own JavaScript snapshot that
+  flattens visible controls into an element table. This project replaces it with the
+  **Browser Use** library, which reads the page's structured DOM/accessibility tree — title,
+  headings, visible controls, form state, and supported same-page frame content. Browser Use
+  observes and never acts.
+- **Executor: Browser Harness (unchanged).** The only component that touches the page, and it
+  re-resolves the chosen node and rechecks visibility before every action — the same CDP layer
+  upstream uses. This project did not add the execution layer; it kept it and hardened the
+  observation it runs on.
+- **Decision: Jev, plus an independent fallback.** Jev still picks one operation plus one
+  candidate (through OpenRouter's Decisions API here), never selectors, coordinates, or code.
+  When Jev fails, is under-confident, or chooses `BLOCKED` with usable actions left, an
+  independent chat model (Qwen3-32B or DeepSeek) re-picks from the same observation.
 
 The split keeps the model's output bounded to an id drawn from a candidate set, and every
 action is independently re-validated by code before it runs. Browser Use understands but
-does not act; Browser Harness acts but does not understand — combined, they close the
-observe → decide → validate → act loop.
+does not act; Browser Harness acts but does not understand — combined with Jev, they close
+the observe → decide → validate → act loop.
 
 **Changes made to raise the success rate on real pages:**
 
