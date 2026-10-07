@@ -136,7 +136,11 @@ rechecks. The executor is inherited, not added here. What changes is the **reade
   flattens visible controls into an element table. This project replaces it with the
   **Browser Use** library, which reads the page's structured DOM/accessibility tree — title,
   headings, visible controls, form state, and supported same-page frame content. Browser Use
-  observes and never acts.
+  observes and never acts. Upstream's `snapshot.js` classifies elements with a hard-coded
+  selector list and a hand-rolled accessible-name approximation, so it can miss non-standard
+  controls and mis-name complex ones; Browser Use reads the browser's own accessibility tree,
+  where role and name are the computed values assistive technology sees — more complete, at
+  the cost of more CDP round-trips per observation.
 - **Executor: Browser Harness (unchanged).** The only component that touches the page, and it
   re-resolves the chosen node and rechecks visibility before every action — the same CDP layer
   upstream uses. This project did not add the execution layer; it kept it and hardened the
