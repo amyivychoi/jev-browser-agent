@@ -8,6 +8,12 @@ A local browser agent using Browser Use for structured page understanding, Jev f
 
 Jev decisions use OpenRouter's Decisions API with `~typesafe/jev-latest` and `OPENROUTER_API_KEY`. If Jev fails, returns invalid choices, or gives confidence below `0.95` for the selected operation or target, the agent asks an independent chat model to choose from the same observation. By default, fallback decisions and generated form text use OpenRouter. If `DEEPSEEK_API_KEY` is set, those chat requests go directly to DeepSeek instead; Jev remains on OpenRouter.
 
+## Demo
+
+![Demo — the agent opens the Wikipedia article about Neptune](docs/demo.gif)
+
+A real run on a clean Chrome profile for the goal *"Open the Wikipedia article about the planet Neptune."* — Jev reads the portal, types, and the agent lands on the article. Captured frame-by-frame over CDP during the live run.
+
 ## Benchmarks: Jev vs Qwen3-32B
 
 The agent's main decision comes from **Jev** (`~typesafe/jev-latest`, via OpenRouter's
